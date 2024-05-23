@@ -4,8 +4,8 @@ hide:
 ---
 # MIB FEC/SWaP Code Generator
 
-Generator Kodów FEC do mib std2 Technisat
+Генератор FEC кодов для MIB2 STD/NAV Technisat/Delphi
 
-Poprzez OBDELEVEN jest możliwość wgrania kodów fec.
+Коды FEC можно загружать через ODIS/OBDELEVEN/VCP/Car Scanner.
 
 --8<-- "overrides/pages/fec.html"
