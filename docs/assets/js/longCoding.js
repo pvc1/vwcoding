@@ -4,6 +4,25 @@ let curSelectedByte = -1;
 let defaultByteSize = 30;
 let labelsFromFile = null;
 
+const lcI18n = pageI18n({
+    wrongSymbols: {
+        ru: "Кодировка содержит неверные символы. Поддерживаются только латинские буквы A-F и цифры 0-9.",
+        en: "Coding has wrong symbols. Latin characters A-F and digits 0-9 are allowed."
+    },
+    oddLength: {
+        ru: "Неверное значение. Кодировка должна содержать чётное количество символов.",
+        en: "Incorrect value. Coding should have even number of symbols."
+    },
+    bytesHeader: {
+        ru: "Байты",
+        en: "Bytes"
+    },
+    badValueFormat: {
+        ru: "{0} - неверный формат введенного значения!",
+        en: "{0} - incorrect value!"
+    }
+});
+
 // ========== Additional methods ==========
 
 function cleanHexValue(str) {
@@ -139,18 +158,12 @@ function checkOrig() {
             }
             return true;
         } else {
-            alert(
-                "Кодировка содержит неверные символы. Поддерживаются только латинские буквы A-F и цифры 0-9. " +
-                "Coding has wrong symbols. Latin characters A-F and digits 0-9 are allowed."
-            );
+            alert(lcI18n.t("wrongSymbols"));
             clearFields();
         }
     } else {
         if (orig.length > 0) {
-            alert(
-                "Неверное значение. Кодировка должна содержать чётное количество символов. " +
-                "Incorrect value. Coding should have even number of symbols."
-            );
+            alert(lcI18n.t("oddLength"));
         }
         clearFields();
     }
@@ -490,7 +503,7 @@ function createByteDescription(countOfBytes) {
     const lines = Math.ceil(countOfBytes / bytesPerLine);
 
     let html = "<table class=\"bordered\">";
-    html += "<tr><th colspan=\"" + colsFirstLine + "\">Байты / Bytes</th></tr>";
+    html += "<tr><th colspan=\"" + colsFirstLine + "\">" + lcI18n.t("bytesHeader") + "</th></tr>";
 
     for (let line = 0; line < lines; line++) {
         const start = line * bytesPerLine;
@@ -606,7 +619,7 @@ function wireByteEvents() {
 function setByte(ctrl, byteIndex) {
     const regexp = /^[0-9a-fA-F]*$/;
     if (!regexp.test(ctrl.value)) {
-        alert(ctrl.value + " - неверный формат введенного значения! Incorrect value!");
+        alert(lcI18n.t("badValueFormat", ctrl.value));
         ctrl.value = "00";
     } else {
         ctrl.value = ctrl.value.toUpperCase();
