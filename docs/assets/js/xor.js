@@ -1,6 +1,17 @@
 let decodeString = "c9d2";
 let codeLength = 4;
 
+const xorI18n = pageI18n({
+  lengthMismatch: {
+    ru: "Длина вводимого значения должна быть {0} символа.",
+    en: "Input HEX value must be exactly {0} characters long."
+  },
+  hexOnly: {
+    ru: "Допустимы только HEX символы (0-9, A-F).",
+    en: "Only HEX characters (0-9, A-F) are allowed."
+  }
+});
+
 function init() {
   const urlParams = new URLSearchParams(window.location.search);
   const codeParam = urlParams.get('code');
@@ -16,15 +27,12 @@ function calculateXor() {
   let result = '';
 
   if (input.length !== codeLength) {
-    alert(
-      "Длина вводимого значения должна быть " + codeLength + " символа.\n" +
-      "Input HEX value must be exactly " + codeLength + " characters long."
-    );
+    alert(xorI18n.t("lengthMismatch", codeLength));
     return;
   }
 
   if (!/^[0-9a-fA-F]+$/.test(input)) {
-    alert("Допустимы только HEX символы (0-9, A-F).\nOnly HEX characters (0-9, A-F) are allowed.");
+    alert(xorI18n.t("hexOnly"));
     return;
   }
 
