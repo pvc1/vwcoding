@@ -1,0 +1,102 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without v prefix (e.g. 1.10.1). Leave empty to bump from the latest tag."
+        required: false
+        type: string
+      bump:
+        description: "Used only when version is empty"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      draft:
+        description: "Create as draft release"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_BUMP: ${{ inputs.bump }}
+        run: |
+          set -euo pipefail
+
+          latest="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          latest="${latest#v}"
+
+          if [ -n "${INPUT_VERSION}" ]; then
+            version="${INPUT_VERSION#v}"
+          else
+            if [ -z "${latest}" ]; then
+              case "${INPUT_BUMP}" in
+                major) version="1.0.0" ;;
+                minor) version="0.1.0" ;;
+                *) version="0.0.1" ;;
+              esac
+            else
+              IFS=. read -r major minor patch <<EOF
+          ${latest}
+          EOF
+              case "${INPUT_BUMP}" in
+                major)
+                  major=$((major + 1))
+                  minor=0
+                  patch=0
+                  ;;
+                minor)
+                  minor=$((minor + 1))
+                  patch=0
+                  ;;
+                patch)
+                  patch=$((patch + 1))
+                  ;;
+              esac
+              version="${major}.${minor}.${patch}"
+            fi
+          fi
+
+          if ! [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version: ${version}" >&2
+            exit 1
+          fi
+
+          if git rev-parse "refs/tags/${version}" >/dev/null 2>&1; then
+            echo "Tag ${version} already exists" >&2
+            exit 1
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "Resolved version: ${version} (previous: ${latest:-none})"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          args=(--generate-notes --target "${GITHUB_SHA}" --title "${version}" "${version}")
+          if [ "${{ inputs.draft }}" = "true" ]; then
+            args=(--draft "${args[@]}")
+          fi
+          gh release create "${args[@]}"
